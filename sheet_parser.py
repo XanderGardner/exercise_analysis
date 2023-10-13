@@ -9,7 +9,7 @@ from cycle_database import cycle_database
 # the formats handled are documented in README.md
 class sheet_parser:
 
-  # parses gym cycle from gca format file and saves cycle object to ./cycle_objects/cycle_name
+  # parses gym cycle from gca format file and saves cycle object to storage
   def parse_gym_gca(self, cycle_name: str, google_sheet_id: str, gid: str) -> None:
     # download raw data
     sheet = self._download_sheet(google_sheet_id, gid)
@@ -64,8 +64,8 @@ class sheet_parser:
 
     if exercise_type == "gym" or exercise_type == "accessory":
       out = []
-      for set_groups in encoded_str.split(","):
-        set_group = set_groups.split("x")
+      for set_groups in encoded_str.strip().split(","):
+        set_group = set_groups.strip().split("x")
 
         # if there are 3 values -> (sets, reps, weight)
         # if there are 2 values -> (reps, weight) and sets = 1
@@ -89,8 +89,8 @@ class sheet_parser:
     
     elif exercise_type == "calisthenics":
       out = []
-      for set_groups in encoded_str.split(","):
-        set_group = set_groups.split("x")
+      for set_groups in encoded_str.strip().split(","):
+        set_group = set_groups.strip().split("x")
 
         # if there are 2 values -> (sets, reps) and sets = 1
         # if there are 1 values -> (reps) and sets = 1
@@ -126,10 +126,20 @@ class sheet_parser:
 
 if __name__ == "__main__":
   sp = sheet_parser()
-  google_sheet_id="1mQcdDrLBjuaIcxJa4rBFefL4WZPSJPD5mSXL-usSJ6k"
-  gid = "1437337729"
-  # sp.parse_gym_gca("example", google_sheet_id, gid)
-  cdb = cycle_database()
   
-  print(cdb.load("example"))
+  with open("./drive_metadata.csv") as file:
+    csv_reader = csv.reader(file)
+
+    for i,row in enumerate(csv_reader):
+      if i == 0:
+        continue
+
+      cycle_name, google_sheet_id, gid, format = row
+      if format == "gca":
+        sp.parse_gym_gca("gym_"+cycle_name, google_sheet_id, gid)
+        print(f"create gym_{cycle_name} cycle object")
+      else:
+        print(f"format {format} not suppoerted for cycle {cycle_name}")
+
+print("parsing complete")
   
