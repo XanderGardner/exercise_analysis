@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 # a cycle object represents a series of workouts completed in one "workout cycle"
 # days are 0 indexed
@@ -10,11 +10,16 @@ class cycle_object:
 
   # initialize an empty cycle object
   def __init__(self):
-    self.num_days = 0
-    self.exercises = {}
+    self.num_days = 0 # number of days in this cycle
+    self.exercises = {} # store workouts for each day for a given exercise key
   
-  # add given exercise to cycle object, expanding days and exercises if needed
-  def add_exercise(self, day: int, exercise_name: str, reps: int, weight: int) -> None:
+  # add given list of exercise sets to cycle object, expanding days and exercises if need
+  def add_exercise(self, day: int, exercise_name: str, sets: List[Tuple[int, int]]) -> None:
+    for reps, weight in sets:
+      self.add_exercise_set(day, exercise_name, reps, weight)
+  
+  # add given exercise set to cycle object, expanding days and exercises if needed
+  def add_exercise_set(self, day: int, exercise_name: str, reps: int, weight: int) -> None:
     # exapand exercise days
     if day >= self.num_days:
       extra_days = day - self.num_days + 1
@@ -53,6 +58,9 @@ class cycle_object:
   # the length of the cycle is the number of days in the cycle
   def __len__(self):
     return self.num_days
+  
+  def __str__(self):
+    return f"cycle_object({self.exercises})"
 
   # validate day input
   def _validate_day(self, day: int) -> None:
@@ -66,15 +74,19 @@ class cycle_object:
 
 if __name__ == "__main__":
   cycle = cycle_object()
-  cycle.add_exercise(0, "front squat", 5, 100)
-  cycle.add_exercise(0, "front squat", 5, 100)
-  cycle.add_exercise(0, "pushups", 5, 160)
-  cycle.add_exercise(1,"pushups", 6, 160)
+  cycle.add_exercise_set(0, "front squat", 5, 100)
+  cycle.add_exercise_set(0, "front squat", 5, 100)
+  cycle.add_exercise_set(0, "pushups", 5, 160)
+  cycle.add_exercise_set(1,"pushups", 6, 160)
+  cycle.add_exercise(1, "hack squat", [(5,100),(5,100)])
 
   assert("pushups" in cycle.exercise_names())
   assert("front squat" in cycle.exercise_names())
 
   assert(cycle.get_volume(0, "front squat") == 1000)
+  assert(cycle.get_volume(1, "hack squat") == 1000)
   assert(len(cycle) == 2)
+
+  print(cycle)
 
   print("tests complete")
