@@ -33,9 +33,14 @@ class cycle_object:
     
     self.exercises[exercise_name][day] += [[reps, weight]]
   
-  # returns a list of the exercise names in this cycle
-  def exercise_names(self) -> List[str]:
-    return list(self.exercises.keys())
+  # return a list of volumes for each day of a given exercise
+  def get_volumes(self, exercise_name: str) -> List[int]:
+    self._validate_exercise_name(exercise_name)
+
+    volumes = []
+    for day in range(self.num_days):
+      volumes.append(self.get_volume(day, exercise_name))
+    return volumes
 
   # return the total volume for a given day and exercise
   def get_volume(self, day: int, exercise_name: str) -> int:
@@ -54,6 +59,10 @@ class cycle_object:
     volumes = [rep * weight for rep,weight in reps_and_weights]
     volumes.sort()
     return volumes
+  
+  # returns a list of the exercise names in this cycle
+  def exercise_names(self) -> List[str]:
+    return list(self.exercises.keys())
   
   # the length of the cycle is the number of days in the cycle
   def __len__(self):
