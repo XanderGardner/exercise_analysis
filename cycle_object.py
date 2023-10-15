@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from scipy.stats import zscore
 
 # a cycle object represents a series of workouts completed in one "workout cycle"
 # days are 0 indexed
@@ -11,20 +12,44 @@ class cycle_object:
   # initialize an empty cycle object
   def __init__(self):
     self.num_days = 0 # number of days in this cycle
-    self.exercises = {} # store workouts for each day for a given exercise key
+    self.exercises = {} # for a given exercise key stores for each day a list of tuples of reps and weight
   
   ########
   # volume by day analysis functions
   ########
+
+  # for all exercises return a tuple of the list of days and a parallel list of zscored volumes for each set
+  def get_zscore_volumes(self, exercise_name: str = None) -> Tuple[List[int],List[int]]:
+    if exercise_name is not None:
+      self._validate_exercise_name(exercise_name)
+
+      days,vols = self.get_volumes(exercise_name)
+      zscores = zscore(vols).tolist()
+      return (days,zscores)
+
+    else:
+
+      # get volumes for all exercises if exercise name not provided
+      out_days = []
+      out_vols = []
+      for exercise_name in self.exercise_names():
+        days,vols = self.get_zscore_volumes(exercise_name)
+        out_days += days
+        out_vols += vols
+      return (out_days, out_vols)
 
   # for a given exercise return a tuple of the list of days and a parallel list of volumes
   def get_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
     self._validate_exercise_name(exercise_name)
 
     volumes = []
+    days = []
     for day in range(self.num_days):
-      volumes.append(self.get_volume(day, exercise_name))
-    return (self.get_days_list() ,volumes)
+      volume = self.get_volume(day, exercise_name)
+      if volume is not None:
+        volumes += [volume]
+        days += [day]
+    return (days ,volumes)
 
   # return the total volume for a given day and exercise
   def get_volume(self, day: int, exercise_name: str) -> int:
@@ -32,12 +57,33 @@ class cycle_object:
     self._validate_exercise_name(exercise_name)
 
     reps_and_weights = self.exercises[exercise_name][day]
-    return sum([rep * weight for rep,weight in reps_and_weights])
+    return sum([rep * weight for rep,weight in reps_and_weights]) if len(reps_and_weights) > 0 else None
   
   ########
   # volume by set and day analysis functions
   ########
 
+  # for all exercises return a tuple of the list of days and a parallel list of zscored volumes for each set
+  def get_zscore_set_volumes(self, exercise_name: str = None) -> Tuple[List[int],List[int]]:
+    if exercise_name is not None:
+      self._validate_exercise_name(exercise_name)
+
+      days,vols = self.get_set_volumes(exercise_name)
+      zscores = zscore(vols).tolist()
+      return (days,zscores)
+
+    else:
+
+      # get volumes for all exercises if exercise name not provided
+      out_days = []
+      out_vols = []
+      for exercise_name in self.exercise_names():
+        days,vols = self.get_zscore_set_volumes(exercise_name)
+        out_days += days
+        out_vols += vols
+      return (out_days, out_vols)
+
+  
   # for a given exercise return a tuple of the list of days and a parallel list of volumes for each set
   # there may be repeat days since sets may be on the same day
   def get_set_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
@@ -47,8 +93,9 @@ class cycle_object:
     days = []
     for day in range(self.num_days):
       day_volumes = self.get_set_volumes_on_day(day, exercise_name)
-      volumes += [day_volumes]
-      days += [day for _ in range(len(day_volumes))]
+      if len(day_volumes) > 0:
+        volumes += day_volumes
+        days += [day for _ in range(len(day_volumes))]
     return (days ,volumes)
 
   # return an ascending list of volumes (one for each set) for a given day and exercise
