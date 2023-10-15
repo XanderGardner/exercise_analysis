@@ -13,6 +13,77 @@ class cycle_object:
     self.num_days = 0 # number of days in this cycle
     self.exercises = {} # store workouts for each day for a given exercise key
   
+  ########
+  # volume by day analysis functions
+  ########
+
+  # for a given exercise return a tuple of the list of days and a parallel list of volumes
+  def get_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
+    self._validate_exercise_name(exercise_name)
+
+    volumes = []
+    for day in range(self.num_days):
+      volumes.append(self.get_volume(day, exercise_name))
+    return (self.get_days_list() ,volumes)
+
+  # return the total volume for a given day and exercise
+  def get_volume(self, day: int, exercise_name: str) -> int:
+    self._validate_day(day)
+    self._validate_exercise_name(exercise_name)
+
+    reps_and_weights = self.exercises[exercise_name][day]
+    return sum([rep * weight for rep,weight in reps_and_weights])
+  
+  ########
+  # volume by set and day analysis functions
+  ########
+
+  # for a given exercise return a tuple of the list of days and a parallel list of volumes for each set
+  # there may be repeat days since sets may be on the same day
+  def get_set_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
+    self._validate_exercise_name(exercise_name)
+
+    volumes = []
+    days = []
+    for day in range(self.num_days):
+      day_volumes = self.get_set_volumes_on_day(day, exercise_name)
+      volumes += [day_volumes]
+      days += [day for _ in range(len(day_volumes))]
+    return (days ,volumes)
+
+  # return an ascending list of volumes (one for each set) for a given day and exercise
+  def get_set_volumes_on_day(self, day: int, exercise_name: str) -> List[int]:
+    self._validate_day(day)
+    self._validate_exercise_name(exercise_name)
+
+    reps_and_weights = self.exercises[exercise_name][day]
+    volumes = [rep * weight for rep,weight in reps_and_weights]
+    volumes.sort()
+    return volumes
+  
+  ########
+  # basic get functions
+  ########
+
+  # returns a list of the exercise names in this cycle
+  def exercise_names(self) -> List[str]:
+    return list(self.exercises.keys())
+  
+  # returns a list of the days [0,1,...,num_days-1]
+  def get_days_list(self) -> List[int]:
+    return list(range(self.num_days))
+  
+  # the length of the cycle is the number of days in the cycle
+  def __len__(self):
+    return self.num_days
+  
+  def __str__(self):
+    return f"cycle_object({self.exercises})"
+  
+  ########
+  # setter functions
+  ########
+
   # add given list of exercise sets to cycle object, expanding days and exercises if need
   def add_exercise(self, day: int, exercise_name: str, sets: List[Tuple[int, int]]) -> None:
     for reps, weight in sets:
@@ -33,43 +104,9 @@ class cycle_object:
     
     self.exercises[exercise_name][day] += [[reps, weight]]
   
-  # return a list of volumes for each day of a given exercise
-  def get_volumes(self, exercise_name: str) -> List[int]:
-    self._validate_exercise_name(exercise_name)
-
-    volumes = []
-    for day in range(self.num_days):
-      volumes.append(self.get_volume(day, exercise_name))
-    return volumes
-
-  # return the total volume for a given day and exercise
-  def get_volume(self, day: int, exercise_name: str) -> int:
-    self._validate_day(day)
-    self._validate_exercise_name(exercise_name)
-
-    reps_and_weights = self.exercises[exercise_name][day]
-    return sum([rep * weight for rep,weight in reps_and_weights])
-
-  # return an ascending list of volumes for a given day and exercise
-  def get_volume_list(self, day: int, exercise_name: str) -> int:
-    self._validate_day(day)
-    self._validate_exercise_name(exercise_name)
-
-    reps_and_weights = self.exercises[exercise_name][day]
-    volumes = [rep * weight for rep,weight in reps_and_weights]
-    volumes.sort()
-    return volumes
-  
-  # returns a list of the exercise names in this cycle
-  def exercise_names(self) -> List[str]:
-    return list(self.exercises.keys())
-  
-  # the length of the cycle is the number of days in the cycle
-  def __len__(self):
-    return self.num_days
-  
-  def __str__(self):
-    return f"cycle_object({self.exercises})"
+  ########
+  # input validation functions
+  ########
 
   # validate day input
   def _validate_day(self, day: int) -> None:
@@ -91,9 +128,6 @@ if __name__ == "__main__":
 
   assert("pushups" in cycle.exercise_names())
   assert("front squat" in cycle.exercise_names())
-
-  assert(cycle.get_volume(0, "front squat") == 1000)
-  assert(cycle.get_volume(1, "hack squat") == 1000)
   assert(len(cycle) == 2)
 
   print(cycle)

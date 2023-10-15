@@ -1,5 +1,6 @@
 from typing import List, Tuple
 import requests
+import sys
 import io
 import csv
 from cycle_object import cycle_object
@@ -124,15 +125,18 @@ class sheet_parser:
     csv_reader = csv.reader(csv_file)
     return [row for row in csv_reader]
 
-if __name__ == "__main__":
+
+# updates cycle objects from at most top num_lines in ./drive_metadata
+def update_from_metadata(max_num_lines: int) -> None:
   sp = sheet_parser()
-  
   with open("./drive_metadata.csv") as file:
     csv_reader = csv.reader(file)
 
     for i,row in enumerate(csv_reader):
       if i == 0:
         continue
+      elif i > max_num_lines:
+        break
 
       cycle_name, google_sheet_id, gid, format = row
       if format == "gca":
@@ -141,5 +145,32 @@ if __name__ == "__main__":
       else:
         print(f"format {format} not suppoerted for cycle {cycle_name}")
 
-print("parsing complete")
+# prompts user to decide next actions from menu 
+def menu_prompt() -> None:
+  print("----------------------------------------------------")
+  print("exercise analysis ~ data pipeline terminal interface")
+  
+  while True:
+    print("----------------------------------------------------")
+    print("\nenter menu option:")
+    print("[1] exit")
+    print("[2] update top line in ./drive_metadata.csv")
+    print("[3] update top 3 lines in ./drive_metadata.csv")
+    print("[4] update all in ./drive_metadata.csv")
+
+    option = input()
+    if option == "1":
+      break
+    elif option == "2":
+      update_from_metadata(1)
+    elif option == "3":
+      update_from_metadata(3)
+    elif option == "4":
+      update_from_metadata(sys.maxsize)
+    else:
+      print(f"\"{option}\" is not a valid menu option")
+
+# begin menu prompt cycle
+if __name__ == "__main__":
+  menu_prompt()
   
