@@ -1,6 +1,6 @@
 # exercise_analysis
 
-I have been tracking my calisthenics and gym exercise progress for the past 3 years on google sheets. The system in this github repository is able to parse every set, rep, and weight I have lifted since then. My workouts usually slightly change every couple months, which I call a "cycle". In `analysis.ipynb`, we can easily analyze the many properties of these cycles.
+I have been tracking my calisthenics and gym exercise progress for the past 3 years on google sheets. The system in this github repository is able to parse every set, rep, and weight I have lifted since then. My workouts usually slightly change every couple months, which I call "cycles". In `analysis.ipynb`, we can easily analyze the many properties of these cycles.
 
 For example, here is a plot of intensity vs time for 3 different exercise groups in the same cycle. I calculate intensity as the predicted one rep max, zscored, and averaged among exercises.
 ![example of intensity graph](readme_images/intensity_example.png)
