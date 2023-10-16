@@ -13,13 +13,73 @@ class cycle_object:
   def __init__(self):
     self.num_days = 0 # number of days in this cycle
     self.exercises = {} # for a given exercise key stores for each day a list of tuples of reps and weight
+    # example: exercises["row"][5] = [(5,6),(4,7)]
   
   ########
-  # volume by day analysis functions
+  #  predicted one rep max functions
   ########
 
-  # for all exercises return a tuple of the list of days and a parallel list of zscored volumes for each set
-  def get_zscore_volumes(self, exercise_name: str = None) -> Tuple[List[int],List[int]]:
+  # for all exercises (or given exercise) return a tuple of the list of days and a parallel list of 
+  # predicted one rep max zscored by exercise
+  def get_zscore_one_rep_maxes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
+    if exercise_name is not None:
+      self._validate_exercise_name(exercise_name)
+
+      days,orms = self.get_one_rep_maxes(exercise_name)
+      zscores = zscore(orms).tolist()
+      return (days,zscores)
+
+    else:
+
+      # get volumes for all exercises if exercise name not provided
+      out_days = []
+      out_orms = []
+      for exercise_name in self.exercise_names():
+        days,orms = self.get_zscore_one_rep_maxes(exercise_name)
+        out_days += days
+        out_orms += orms
+      return (out_days, out_orms)
+
+  # for a given exercise return a tuple of the list of days and a parallel list of predicted one rep max
+  def get_one_rep_maxes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
+    self._validate_exercise_name(exercise_name)
+
+    one_rep_maxes = []
+    days = []
+    for day in range(self.num_days):
+      one_rep_max = self.get_one_rep_max(day, exercise_name)
+      if one_rep_max is not None:
+        one_rep_maxes += [one_rep_max]
+        days += [day]
+    return (days ,one_rep_maxes)
+
+  # return the predicted one rep max based on sets for a given day and exercise
+  def get_one_rep_max(self, day: int, exercise_name: str) -> int:
+    self._validate_day(day)
+    self._validate_exercise_name(exercise_name)
+    if len(self.exercises[exercise_name][day]) == 0:
+      return None
+
+    one_rep_max = 0
+    for reps, weight in self.exercises[exercise_name][day]:
+      predicted = (self._epley_formula(reps, weight) + self._brzycki_formula(reps, weight)) // 2
+      one_rep_max = max(one_rep_max, predicted)
+    return one_rep_max
+
+  # given reps and weight in a set, return the predicted one rep max according to epley's formula
+  def _epley_formula(self, reps: int, weight: int) -> float:
+    return weight * (1 + (0.0333 * reps))
+
+  # given reps and weight in a set, return the predicted one rep max according to brzychi's formula
+  def _brzycki_formula(self, reps: int, weight: int) -> float:
+    return weight * (1.0278 - (0.0278 * reps))
+
+  ########
+  # volume functions
+  ########
+
+  # for all exercises (or given exercise) return a tuple of the list of days and a parallel list of zscored volumes for each set
+  def get_zscore_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
     if exercise_name is not None:
       self._validate_exercise_name(exercise_name)
 
@@ -39,7 +99,7 @@ class cycle_object:
       return (out_days, out_vols)
 
   # for a given exercise return a tuple of the list of days and a parallel list of volumes
-  def get_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
+  def get_volumes(self, exercise_name: str) -> Tuple[List[int], List[int]]:
     self._validate_exercise_name(exercise_name)
 
     volumes = []
@@ -60,11 +120,11 @@ class cycle_object:
     return sum([rep * weight for rep,weight in reps_and_weights]) if len(reps_and_weights) > 0 else None
   
   ########
-  # volume by set and day analysis functions
+  # volume by set (more granular) functions 
   ########
 
   # for all exercises return a tuple of the list of days and a parallel list of zscored volumes for each set
-  def get_zscore_set_volumes(self, exercise_name: str = None) -> Tuple[List[int],List[int]]:
+  def get_zscore_set_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
     if exercise_name is not None:
       self._validate_exercise_name(exercise_name)
 
@@ -86,7 +146,7 @@ class cycle_object:
   
   # for a given exercise return a tuple of the list of days and a parallel list of volumes for each set
   # there may be repeat days since sets may be on the same day
-  def get_set_volumes(self, exercise_name: str) -> Tuple[List[int],List[int]]:
+  def get_set_volumes(self, exercise_name: str) -> Tuple[List[int], List[int]]:
     self._validate_exercise_name(exercise_name)
 
     volumes = []
