@@ -19,9 +19,28 @@ class cycle_object:
   #  predicted one rep max functions
   ########
 
+  # for all exercises return a tuple of the list of days and a parallel list of 
+  # predicted one rep max zscored by exercise, averaged among exercises for the day
+  def get_avg_zscore_one_rep_maxes(self) -> Tuple[List[int], List[float]]:
+    day_to_orm = {} # day -> [sum_orms, count_orms]
+    for day, orm in zip(*self.get_zscore_one_rep_maxes()):
+      if day in day_to_orm:
+        day_to_orm[day][0] += orm
+        day_to_orm[day][1] += 1
+      else:
+        day_to_orm[day] = [orm,1]
+    
+    days = []
+    avg_orms = []
+    for day, (sum_orms,count_orms) in day_to_orm.items():
+      days += [day]
+      avg_orms += [sum_orms/count_orms]
+    return (days, avg_orms)
+
+
   # for all exercises (or given exercise) return a tuple of the list of days and a parallel list of 
   # predicted one rep max zscored by exercise
-  def get_zscore_one_rep_maxes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
+  def get_zscore_one_rep_maxes(self, exercise_name: str = None) -> Tuple[List[int], List[float]]:
     if exercise_name is not None:
       self._validate_exercise_name(exercise_name)
 
@@ -79,7 +98,7 @@ class cycle_object:
   ########
 
   # for all exercises (or given exercise) return a tuple of the list of days and a parallel list of zscored volumes for each set
-  def get_zscore_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
+  def get_zscore_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[float]]:
     if exercise_name is not None:
       self._validate_exercise_name(exercise_name)
 
@@ -124,7 +143,7 @@ class cycle_object:
   ########
 
   # for all exercises return a tuple of the list of days and a parallel list of zscored volumes for each set
-  def get_zscore_set_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[int]]:
+  def get_zscore_set_volumes(self, exercise_name: str = None) -> Tuple[List[int], List[float]]:
     if exercise_name is not None:
       self._validate_exercise_name(exercise_name)
 
